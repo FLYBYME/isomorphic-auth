@@ -156,7 +156,7 @@ describe('mKDC & TicketManager (15 Tests)', () => {
         const signature = await IsomorphicCrypto.signEd25519(nonce, keys.privateKey);
         
         await mkdc.authenticate({ nodeID, nonce, signature });
-        expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining('successfully authenticated'), expect.any(Object));
+        expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining('successfully authenticated. Issuing TGT.'));
     });
 
     test('15. TicketManager should acquire TGT', async () => {
