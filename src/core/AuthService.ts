@@ -1,6 +1,6 @@
 import { mKDC } from './mKDC';
 import { TGTRequest, STRequest } from '../types/auth.schema';
-import { Context } from '../../../isomorphic-core/src/contracts/Context';
+import { Context } from 'isomorphic-registry';
 
 /**
  * AuthService — Handles authentication and ticket issuance via mKDC.

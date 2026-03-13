@@ -9,7 +9,15 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
-    "composite": true
+    "composite": true,
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "isomorphic-registry": ["../isomorphic-registry/src/index"]
+    }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../isomorphic-registry" }
+  ]
 }
