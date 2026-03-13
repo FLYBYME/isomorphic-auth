@@ -1,8 +1,8 @@
-import { JWTManager } from '../src/core/JWTManager';
+import { MeshTokenManager } from '../src/core/MeshTokenManager';
 import { IsomorphicCrypto } from '../src/utils/crypto';
 
-describe('JWTManager (Browser-Safe)', () => {
-    let jwtManager: JWTManager;
+describe('MeshTokenManager (Browser-Safe)', () => {
+    let tokenManager: MeshTokenManager;
     let keys: { publicKey: string, privateKey: string };
 
     beforeAll(async () => {
@@ -22,7 +22,7 @@ describe('JWTManager (Browser-Safe)', () => {
     });
 
     beforeEach(() => {
-        jwtManager = new JWTManager('test-issuer', keys);
+        tokenManager = new MeshTokenManager('test-issuer', keys);
     });
 
     test('should sign and verify a ticket', async () => {
@@ -32,33 +32,33 @@ describe('JWTManager (Browser-Safe)', () => {
             capabilities: ['mesh:member']
         };
 
-        const ticket = await jwtManager.sign(payload);
+        const ticket = await tokenManager.sign(payload);
         expect(ticket).toBeDefined();
 
-        const decoded = await jwtManager.verify(ticket);
+        const decoded = await tokenManager.verify(ticket);
         expect(decoded).toMatchObject(payload);
         expect(decoded?.iss).toBe('test-issuer');
     });
 
     test('should return null for invalid signature', async () => {
-        const ticket = await jwtManager.sign({ type: 'TGT' as const, sub: 'node-1' });
+        const ticket = await tokenManager.sign({ type: 'TGT' as const, sub: 'node-1' });
         const tampered = ticket.substring(0, ticket.length - 5) + 'AAAAA';
         
-        const decoded = await jwtManager.verify(tampered);
+        const decoded = await tokenManager.verify(tampered);
         expect(decoded).toBeNull();
     });
 
     test('should return null for expired ticket', async () => {
-        const ticket = await jwtManager.sign({ type: 'TGT' as const, sub: 'node-1' }, -100);
-        const decoded = await jwtManager.verify(ticket);
+        const ticket = await tokenManager.sign({ type: 'TGT' as const, sub: 'node-1' }, -100);
+        const decoded = await tokenManager.verify(ticket);
         expect(decoded).toBeNull();
     });
 
     test('should decode without verification', async () => {
         const payload = { type: 'ST' as const, sub: 'node-1', aud: 'node-2' };
-        const ticket = await jwtManager.sign(payload);
+        const ticket = await tokenManager.sign(payload);
         
-        const decoded = jwtManager.decode(ticket);
+        const decoded = tokenManager.decode(ticket);
         expect(decoded).toMatchObject(payload);
     });
 });

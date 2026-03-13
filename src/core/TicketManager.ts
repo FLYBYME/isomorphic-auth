@@ -1,4 +1,4 @@
-import { JWTManager } from './JWTManager';
+import { MeshTokenManager } from './MeshTokenManager';
 import { IsomorphicCrypto } from '../utils/crypto';
 import { TGTRequest, STRequest, TokenPayload } from '../types/auth.schema';
 import { ILogger } from '../types/auth.types';
@@ -16,7 +16,7 @@ export class TicketManager {
 
     constructor(
         private nodeID: string,
-        private jwtManager: JWTManager,
+        private tokenManager: MeshTokenManager,
         private kdcCaller: KDCCaller,
         private logger: ILogger,
         private privateKey?: string
@@ -44,7 +44,7 @@ export class TicketManager {
             this.tgt = res.token || res.tgt;
 
             if (this.tgt) {
-                const decoded = this.jwtManager.decode(this.tgt);
+                const decoded = this.tokenManager.decode(this.tgt);
                 if (decoded && decoded.exp) {
                     this.tgtExpiration = decoded.exp * 1000;
                     this.scheduleRenewal();
@@ -73,7 +73,7 @@ export class TicketManager {
     async getTicketFor(targetNodeID: string): Promise<string> {
         const cachedST = this.stCache.get(targetNodeID);
         if (cachedST) {
-            const decoded = this.jwtManager.decode(cachedST);
+            const decoded = this.tokenManager.decode(cachedST);
             if (decoded && decoded.exp && (decoded.exp * 1000) > Date.now()) {
                 return cachedST;
             }

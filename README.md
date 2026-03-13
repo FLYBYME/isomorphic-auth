@@ -8,7 +8,7 @@ A standalone, browser-safe, and isomorphic authentication library for decentrali
 - **Browser-Safe**: Zero dependencies on Node.js built-ins. Uses `globalThis.crypto.subtle` (WebCrypto) for all cryptographic operations.
 - **Zero-Trust Identity**: Implements a Kerberos-style Mesh Key Distribution Center (mKDC) logic using Ed25519 signatures.
 - **Hierarchical RBAC**: Flexible policy engine for permission management with group inheritance and wildcards.
-- **Authenticated Encryption**: Built-in SecurityManager for AES-256-GCM encryption with replay protection.
+- **Authenticated Encryption**: Built-in SecurityManager for AES-256-GCM encryption with replay protection (nonce caching + timestamp).
 - **Strictly Typed**: Zero `any` usage, providing full type safety for all auth primitives.
 
 ## Installation
@@ -22,14 +22,14 @@ npm install isomorphic-auth
 ### Identity Bootstrap (Client)
 
 ```typescript
-import { TicketManager, JWTManager, ILogger } from 'isomorphic-auth';
+import { TicketManager, MeshTokenManager, ILogger } from 'isomorphic-auth';
 
 const logger: ILogger = { ... };
-const jwtManager = new JWTManager('gateway-issuer', { publicKey: '...' });
+const tokenManager = new MeshTokenManager('gateway-issuer', { publicKey: '...' });
 
 const ticketManager = new TicketManager(
     'my-node-id',
-    jwtManager,
+    tokenManager,
     async (action, params) => { /* RPC call to KDC */ },
     logger,
     'my-private-key'
@@ -56,7 +56,7 @@ if (engine.can('any.action', ctx)) {
 
 ## Core Components
 
-- `JWTManager`: Handles creation and verification of signed tickets (TGT/ST).
+- `MeshTokenManager`: Handles creation and verification of signed mesh tokens (TGT/ST).
 - `mKDC`: Core logic for the Key Distribution Center.
 - `PolicyEngine`: hierarchical permission evaluator.
 - `SecurityManager`: AES-GCM encryption wrapper with replay protection.

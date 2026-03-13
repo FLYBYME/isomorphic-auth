@@ -1,29 +1,32 @@
 import { IsomorphicCrypto } from '../utils/crypto';
 import { TokenPayload } from '../types/auth.schema';
 
-export interface JWTKeys {
+export interface TokenKeys {
     privateKey?: string;
     publicKey?: string;
 }
 
 /**
- * JWTManager — handles Ticket creation and verification.
- * Uses Ed25519 signatures for high-performance mesh security.
+ * MeshTokenManager — handles creation and verification of signed mesh tokens.
+ * 
+ * NOTE: This is NOT a standard RFC 7519 JWT implementation. It uses a 
+ * custom envelope optimized for decentralized mesh performance and 
+ * Ed25519 binary signatures.
  */
-export class JWTManager {
+export class MeshTokenManager {
     private privateKey: string | undefined;
     private publicKey: string | undefined;
     private defaultTTL: number;
     private issuer: string;
 
-    constructor(issuer: string, keys?: JWTKeys, defaultTTL = 3600) {
+    constructor(issuer: string, keys?: TokenKeys, defaultTTL = 3600) {
         this.privateKey = keys?.privateKey;
         this.publicKey = keys?.publicKey;
         this.defaultTTL = defaultTTL;
         this.issuer = issuer;
     }
 
-    /** Create a signed ticket */
+    /** Create a signed token */
     async sign(payload: Omit<TokenPayload, 'iss' | 'iat' | 'exp' | 'jti'>, ttl?: number): Promise<string> {
         if (!this.privateKey) throw new Error('No private key available for signing');
 
@@ -47,7 +50,7 @@ export class JWTManager {
         return IsomorphicCrypto.toBase64(bytes);
     }
 
-    /** Verify a signed ticket */
+    /** Verify a signed token */
     async verify(ticket: string, overridePublicKey?: string): Promise<TokenPayload | null> {
         try {
             const pubKey = overridePublicKey || this.publicKey;

@@ -1,4 +1,4 @@
-export * from './core/JWTManager';
+export * from './core/MeshTokenManager';
 export * from './core/PolicyEngine';
 export * from './core/TicketManager';
 export * from './core/mKDC';

@@ -8,6 +8,13 @@ export class SecurityManager {
     private key: CryptoKey | null = null;
     private static readonly IV_LENGTH = 12;
     private static readonly AUTH_TAG_BIT_LENGTH = 128;
+    
+    /** 
+     * Replay Protection: Cache of recently seen nonces (IVs).
+     * Nonces must be unique per key within the timestamp window.
+     */
+    private nonceCache = new Map<string, number>();
+    private static readonly REPLAY_WINDOW_MS = 30000;
 
     constructor(private secret?: string) { }
 
@@ -66,10 +73,17 @@ export class SecurityManager {
         const iv = data.subarray(0, SecurityManager.IV_LENGTH);
         const encrypted = data.subarray(SecurityManager.IV_LENGTH);
 
+        // 1. Replay Protection: Check if nonce was already used
+        const ivHex = Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join('');
+        if (this.nonceCache.has(ivHex)) {
+            throw new Error('Replay detected: Nonce already used.');
+        }
+
+        // Fix: Use new Uint8Array to ensure a non-SharedArrayBuffer view for WebCrypto
         const decrypted = await globalThis.crypto.subtle.decrypt(
-            { name: 'AES-GCM', iv },
+            { name: 'AES-GCM', iv: new Uint8Array(iv) },
             this.key,
-            encrypted
+            new Uint8Array(encrypted)
         );
 
         const decryptedArray = new Uint8Array(decrypted);
@@ -78,10 +92,24 @@ export class SecurityManager {
         const now = BigInt(Date.now());
         const diff = now > timestamp ? now - timestamp : timestamp - now;
 
-        if (diff > 30000n) {
+        // 2. Replay Protection: Check timestamp window
+        if (diff > BigInt(SecurityManager.REPLAY_WINDOW_MS)) {
             throw new Error('Possible replay attack or severe clock skew.');
         }
 
+        // Add to cache and cleanup old entries
+        this.nonceCache.set(ivHex, Date.now());
+        this.cleanupNonceCache();
+
         return decryptedArray.subarray(8);
+    }
+
+    private cleanupNonceCache() {
+        const now = Date.now();
+        for (const [nonce, time] of this.nonceCache.entries()) {
+            if (now - time > SecurityManager.REPLAY_WINDOW_MS) {
+                this.nonceCache.delete(nonce);
+            }
+        }
     }
 }

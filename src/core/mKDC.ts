@@ -1,4 +1,4 @@
-import { JWTManager } from './JWTManager';
+import { MeshTokenManager } from './MeshTokenManager';
 import { IsomorphicCrypto } from '../utils/crypto';
 import { TGTRequest, STRequest, TokenPayload } from '../types/auth.schema';
 import { ILogger, IStorageAdapter } from '../types/auth.types';
@@ -10,7 +10,7 @@ import { ILogger, IStorageAdapter } from '../types/auth.types';
 export class mKDC {
     constructor(
         private nodeID: string,
-        private jwtManager: JWTManager,
+        private tokenManager: MeshTokenManager,
         private storage: IStorageAdapter,
         private logger: ILogger
     ) { }
@@ -37,7 +37,7 @@ export class mKDC {
 
         this.logger.info(`Node ${req.nodeID} successfully authenticated. Issuing TGT.`);
 
-        const token = await this.jwtManager.sign({
+        const token = await this.tokenManager.sign({
             type: 'TGT',
             sub: req.nodeID,
             capabilities: node.capabilities
@@ -50,7 +50,7 @@ export class mKDC {
      * Issue a Service Ticket (ST) using a valid TGT.
      */
     async issueServiceTicket(req: STRequest): Promise<{ token: string }> {
-        const decodedTGT = await this.jwtManager.verify(req.tgt);
+        const decodedTGT = await this.tokenManager.verify(req.tgt);
         if (!decodedTGT || decodedTGT.type !== 'TGT') {
             throw new Error('Invalid or expired TGT.');
         }
@@ -64,7 +64,7 @@ export class mKDC {
 
         this.logger.debug(`Issuing ST: ${sourceNodeID} -> ${req.targetNodeID}`);
 
-        const token = await this.jwtManager.sign({
+        const token = await this.tokenManager.sign({
             type: 'ST',
             sub: sourceNodeID,
             aud: req.targetNodeID
