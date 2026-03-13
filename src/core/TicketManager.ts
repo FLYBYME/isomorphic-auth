@@ -80,6 +80,11 @@ export class TicketManager {
             this.stCache.delete(targetNodeID);
         }
 
+        // Memory Guard: Prune cache if it gets too large
+        if (this.stCache.size > 100) {
+            this.pruneSTCache();
+        }
+
         if (!this.tgt) {
             throw new Error('No valid TGT available. Call bootstrapIdentity() first.');
         }
@@ -96,8 +101,25 @@ export class TicketManager {
         return st;
     }
 
+    private pruneSTCache(): void {
+        const now = Date.now();
+        for (const [nodeID, st] of this.stCache.entries()) {
+            const decoded = this.tokenManager.decode(st);
+            if (!decoded || !decoded.exp || (decoded.exp * 1000) <= now) {
+                this.stCache.delete(nodeID);
+            }
+        }
+        
+        // If still too large, remove oldest
+        if (this.stCache.size > 100) {
+            const firstKey = this.stCache.keys().next().value;
+            if (firstKey) this.stCache.delete(firstKey);
+        }
+    }
+
     stop(): void {
         if (this.renewalTimer) clearTimeout(this.renewalTimer);
+        this.stCache.clear();
     }
 
     getTGT(): string | null {
