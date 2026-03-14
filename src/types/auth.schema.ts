@@ -29,6 +29,7 @@ export const TokenPayloadSchema = z.object({
     aud: z.string().optional(),
     sessionKey: z.string().optional(),
     jti: z.string().optional(),
+    tenant_id: z.string().optional(),
 });
 
 export const NodeSchema = z.object({

@@ -1,6 +1,8 @@
+import { z } from 'zod';
 import { mKDC } from './mKDC';
-import { Context } from '@mesh-app/core';
-import { IServiceActionRegistry } from '../types/auth.contract';
+import { Context } from 'isomorphic-registry';
+// IServiceActionRegistry is a global interface, no need to import it if it's not exported.
+// However, since we are in a module, we might need to reference it or use the type directly.
 
 /**
  * AuthService — Handles authentication and ticket issuance.
@@ -15,8 +17,8 @@ export class AuthService {
      * Authenticate a node and issue a TGT.
      */
     async authenticate(
-        ctx: Context<IServiceActionRegistry['auth.authenticate']['params']>
-    ): Promise<IServiceActionRegistry['auth.authenticate']['returns']> {
+        ctx: Context<z.infer<IServiceActionRegistry['auth.authenticate']['params']>>
+    ): Promise<z.infer<IServiceActionRegistry['auth.authenticate']['returns']>> {
         const result = await this.mkdc.authenticate(ctx.params);
         return { token: result.token };
     }
@@ -25,8 +27,8 @@ export class AuthService {
      * Issue a Service Ticket (ST) using a TGT.
      */
     async getServiceTicket(
-        ctx: Context<IServiceActionRegistry['auth.getServiceTicket']['params']>
-    ): Promise<IServiceActionRegistry['auth.getServiceTicket']['returns']> {
+        ctx: Context<z.infer<IServiceActionRegistry['auth.getServiceTicket']['params']>>
+    ): Promise<z.infer<IServiceActionRegistry['auth.getServiceTicket']['returns']>> {
         const result = await this.mkdc.issueServiceTicket(ctx.params);
         return { token: result.token };
     }

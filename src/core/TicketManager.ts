@@ -51,8 +51,8 @@ export class TicketManager {
                     this.logger.info('Identity established. TGT acquired.');
                 }
             }
-        } catch (err: any) {
-            this.logger.error('Identity bootstrap failed', { error: err.message });
+        } catch (err: unknown) {
+            this.logger.error('Identity bootstrap failed', { error: err instanceof Error ? err.message : String(err) });
             throw err;
         }
     }
