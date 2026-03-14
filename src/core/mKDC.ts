@@ -19,7 +19,7 @@ export class mKDC {
      * Authenticate a node via Ed25519 signature and issue a TGT.
      */
     async authenticate(req: TGTRequest): Promise<{ token: string }> {
-        const node = await this.storage.get(req.nodeID);
+        const node = await this.storage.getNode(req.nodeID);
         if (!node || node.status === 'revoked') {
             throw new Error(`Node ${req.nodeID} is not registered or revoked.`);
         }
@@ -57,7 +57,7 @@ export class mKDC {
 
         const sourceNodeID = decodedTGT.sub;
 
-        const targetNode = await this.storage.get(req.targetNodeID);
+        const targetNode = await this.storage.getNode(req.targetNodeID);
         if (!targetNode || targetNode.status === 'revoked') {
             throw new Error(`Target node ${req.targetNodeID} is not available.`);
         }

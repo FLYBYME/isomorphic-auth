@@ -46,11 +46,11 @@ describe('Additional Coverage Tests', () => {
 
         test('should getTicketFor target', async () => {
             const mockCaller = jest.fn().mockImplementation(async (action) => {
-                if (action === 'auth.authenticate') {
+                if (action === 'sys.kdc.authenticate') {
                     const tgt = await tokenManager.sign({ type: 'TGT', sub: 'my-node', capabilities: [] });
                     return { token: tgt };
                 }
-                if (action === 'auth.getServiceTicket') {
+                if (action === 'sys.kdc.getServiceTicket') {
                     const st = await tokenManager.sign({ type: 'ST', sub: 'my-node', aud: 'target-node' });
                     return { token: st };
                 }
@@ -69,8 +69,8 @@ describe('Additional Coverage Tests', () => {
 
         test('should prune cache when exceeding 100 entries', async () => {
             const mockCaller = jest.fn().mockImplementation(async (action) => {
-                if (action === 'auth.authenticate') return { token: await tokenManager.sign({ type: 'TGT', sub: 'my-node', capabilities: [] }) };
-                if (action === 'auth.getServiceTicket') return { token: await tokenManager.sign({ type: 'ST', sub: 'my-node', aud: 'target' }) };
+                if (action === 'sys.kdc.authenticate') return { token: await tokenManager.sign({ type: 'TGT', sub: 'my-node', capabilities: [] }) };
+                if (action === 'sys.kdc.getServiceTicket') return { token: await tokenManager.sign({ type: 'ST', sub: 'my-node', aud: 'target' }) };
             });
             const tm = new TicketManager('my-node', tokenManager, mockCaller, mockLogger, keys.privateKey);
             tms.push(tm);

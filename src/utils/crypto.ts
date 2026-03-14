@@ -1,3 +1,11 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CryptoKey = any; // Fallback for environments where it is not globally defined.
+
+export interface CryptoKeyPair {
+    publicKey: CryptoKey;
+    privateKey: CryptoKey;
+}
+
 /**
  * WebCrypto-based cryptographic utilities (Isomorphic/Browser-safe).
  */
@@ -15,6 +23,24 @@ export class IsomorphicCrypto {
             for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
         }
         return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    /** Generate a new Ed25519 key pair */
+    static async generateKeyPair(): Promise<{ publicKey: string; privateKey: string }> {
+        if (!this.crypto) throw new Error('WebCrypto not available');
+        const keyPair = (await this.crypto.subtle.generateKey(
+            { name: 'Ed25519' },
+            true,
+            ['sign', 'verify']
+        )) as CryptoKeyPair;
+
+        const pubKeyBuf = await this.crypto.subtle.exportKey('spki', keyPair.publicKey);
+        const privKeyBuf = await this.crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+
+        return {
+            publicKey: this.toBase64(new Uint8Array(pubKeyBuf)),
+            privateKey: this.toBase64(new Uint8Array(privKeyBuf))
+        };
     }
 
     /** Compute SHA-256 hash of a string or buffer */
@@ -86,11 +112,46 @@ export class IsomorphicCrypto {
 
     /** Helper: Base64 to Uint8Array (isomorphic) */
     static fromBase64(b64: string): Uint8Array {
+        if (typeof Buffer !== 'undefined') return new Uint8Array(Buffer.from(b64, 'base64'));
         const binString = globalThis.atob(b64);
-        const bytes = new Uint8Array(binString.length);
-        for (let i = 0; i < binString.length; i++) {
-            bytes[i] = binString.charCodeAt(i);
-        }
-        return bytes;
+        return Uint8Array.from(binString, (m) => m.charCodeAt(0));
+    }
+
+    /** Securely hash a password using PBKDF2 */
+    static async hashPassword(password: string, saltB64?: string): Promise<{ hash: string, salt: string }> {
+        if (!this.crypto) throw new Error('WebCrypto not available');
+
+        const salt = saltB64 ? this.fromBase64(saltB64) : this.crypto.getRandomValues(new Uint8Array(16));
+        const iterations = 100000;
+        
+        const baseKey = await this.crypto.subtle.importKey(
+            'raw',
+            new TextEncoder().encode(password),
+            'PBKDF2',
+            false,
+            ['deriveBits', 'deriveKey']
+        );
+
+        const derivedBits = await this.crypto.subtle.deriveBits(
+            {
+                name: 'PBKDF2',
+                salt: salt as any,
+                iterations: iterations,
+                hash: 'SHA-256'
+            },
+            baseKey,
+            256
+        );
+
+        return {
+            hash: this.toBase64(new Uint8Array(derivedBits)),
+            salt: this.toBase64(salt)
+        };
+    }
+
+    /** Verify a password against a PBKDF2 hash */
+    static async verifyPassword(password: string, hash: string, salt: string): Promise<boolean> {
+        const result = await this.hashPassword(password, salt);
+        return result.hash === hash;
     }
 }

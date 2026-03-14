@@ -11,6 +11,7 @@
   "dependencies": {
     "eventemitter3": "^5.0.4",
     "isomorphic-registry": "file:../isomorphic-registry",
+    "raft-consensus": "file:../raft-consensus",
     "nanoid": "^5.1.6",
     "zod": "^3.25.76"
   },

@@ -40,7 +40,8 @@ export class TicketManager {
         };
 
         try {
-            const res = await this.kdcCaller('auth.authenticate', req as unknown as Record<string, unknown>);
+            const res = await this.kdcCaller('sys.kdc.authenticate', req as unknown as Record<string, unknown>);
+            if (!res) throw new Error('Empty response from KDC');
             this.tgt = res.token || res.tgt;
 
             if (this.tgt) {
@@ -94,7 +95,8 @@ export class TicketManager {
             targetNodeID
         };
 
-        const res = await this.kdcCaller('auth.getServiceTicket', req as unknown as Record<string, unknown>);
+        const res = await this.kdcCaller('sys.kdc.getServiceTicket', req as unknown as Record<string, unknown>);
+        if (!res) throw new Error('Empty response from KDC');
         const st = res.token || res.st;
         this.stCache.set(targetNodeID, st);
 

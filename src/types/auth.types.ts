@@ -9,9 +9,15 @@ export interface ILogger {
 }
 
 export interface IStorageAdapter {
-    get(key: string): Promise<NodeRecord | null>;
-    set(key: string, value: NodeRecord): Promise<void>;
-    delete(key: string): Promise<void>;
+    // Key-Value style for NodeRecord
+    getNode(key: string): Promise<NodeRecord | null>;
+    setNode(key: string, value: NodeRecord): Promise<void>;
+    deleteNode(key: string): Promise<void>;
+    
+    // SQL style for DistributedLedger (must match raft-consensus IStorageAdapter)
+    run(sql: string, params?: unknown[]): Promise<any>;
+    get<T = unknown>(sql: string, params?: unknown[]): Promise<T | undefined>;
+    all<T = unknown>(sql: string, params?: unknown[]): Promise<T[]>;
 }
 
 export interface BaseMeshToken {
